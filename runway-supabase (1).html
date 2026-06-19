@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RUNWAY · SF</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+  :root{
+    --bg:#131210; --bg2:#1B1916; --card:#1C1A16; --border:#2B2820;
+    --ink:#EDE7D6; --muted:#8F887A; --amber:#F0B33C; --mint:#86C7A0;
+    --verm:#E2603B; --track:#25221B;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1100px;margin:0 auto;padding:28px 22px 60px;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  /* header */
+  .head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--border);}
+  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.22em;color:var(--muted);margin-bottom:6px;}
+  h1{font-size:46px;font-weight:700;letter-spacing:-.02em;margin:0;line-height:1;background:linear-gradient(180deg,#F6E3B0,#F0B33C);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .statusbox{text-align:right;border:1px solid var(--border);border-radius:10px;padding:10px 16px;background:var(--card);}
+  .statuslabel{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;color:var(--muted);}
+  .statusval{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:var(--mint);margin-top:2px;}
+
+  /* connection pill */
+  .conn{display:flex;align-items:center;gap:8px;margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--verm);}
+  .dot.ok{background:var(--mint);}
+  .gear{margin-left:auto;background:none;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:3px 9px;cursor:pointer;font-family:inherit;font-size:11px;}
+  .gear:hover{border-color:var(--amber);color:var(--amber);}
+
+  /* runway gauges */
+  .gauges{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:26px;}
+  .gauge{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;}
+  .gauge .l{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--muted);}
+  .gauge .v{font-family:'JetBrains Mono',monospace;font-size:23px;font-weight:700;margin:5px 0 2px;color:var(--amber);}
+  .gauge .s{font-size:10.5px;color:var(--muted);}
+
+  /* runway bar */
+  .runway{position:relative;height:42px;border-radius:8px;overflow:hidden;margin-top:22px;background:linear-gradient(180deg,#0E0D0B,#16140F);border:1px solid var(--border);box-shadow:inset 0 0 30px rgba(0,0,0,.6);}
+  .runway-used{position:absolute;left:0;top:0;bottom:0;background:repeating-linear-gradient(45deg,#221F18,#221F18 8px,#1D1A14 8px,#1D1A14 16px);transition:width .5s;}
+  .runway-line{position:absolute;top:50%;left:14px;right:14px;height:2px;transform:translateY(-50%);background:repeating-linear-gradient(90deg,#5a5236 0,#5a5236 16px,transparent 16px,transparent 30px);opacity:.55;}
+  .runway-marker{position:absolute;top:0;bottom:0;width:3px;background:var(--amber);box-shadow:0 0 12px 2px rgba(240,179,60,.7);transition:left .5s;}
+  .runway-foot{display:flex;justify-content:space-between;margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+
+  .warn{margin-top:16px;padding:12px 16px;border-radius:9px;font-size:13.5px;background:rgba(226,96,59,.1);border:1px solid rgba(226,96,59,.4);color:#F0A78C;}
+
+  /* period control */
+  .periodbar{display:flex;align-items:center;gap:14px;margin-top:30px;flex-wrap:wrap;}
+  .seg{display:inline-flex;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:3px;}
+  .seg button{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.06em;background:none;border:none;color:var(--muted);padding:7px 16px;border-radius:6px;cursor:pointer;}
+  .seg button.active{background:linear-gradient(180deg,#F6CB6A,#EBA72E);color:#1A1407;font-weight:700;}
+  .nav{display:flex;align-items:center;gap:10px;}
+  .nav button{background:var(--card);border:1px solid var(--border);color:var(--ink);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:16px;}
+  .nav button:hover:not(:disabled){border-color:var(--amber);}
+  .nav button:disabled{opacity:.3;cursor:default;}
+  .nav .plabel{font-family:'JetBrains Mono',monospace;font-size:13px;min-width:170px;text-align:center;}
+
+  /* period summary */
+  .psum{display:flex;gap:22px;margin-top:18px;flex-wrap:wrap;align-items:flex-end;}
+  .psum .blk{display:flex;flex-direction:column;gap:3px;}
+  .psum .bl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--muted);}
+  .psum .bv{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:700;}
+
+  .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;margin-top:24px;}
+  .section-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;}
+  .section-h h2{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:.16em;font-weight:700;margin:0;}
+  .hint{font-size:11px;color:var(--muted);}
+
+  .cat{margin-bottom:15px;}
+  .cat-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:10px;}
+  .cat-name{font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .kind{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.08em;padding:2px 6px;border-radius:4px;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);}
+  .cat-fig{font-family:'JetBrains Mono',monospace;font-size:13px;display:flex;align-items:center;gap:4px;white-space:nowrap;}
+  .slash{color:var(--muted);}
+  .budget-btn{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);background:none;border:none;cursor:pointer;padding:1px 3px;border-radius:4px;}
+  .budget-btn:hover{color:var(--amber);background:rgba(240,179,60,.08);}
+  .budget-input{font-family:'JetBrains Mono',monospace;font-size:13px;width:62px;background:var(--bg);color:var(--ink);border:1px solid var(--amber);border-radius:4px;padding:1px 4px;}
+  .bar{height:8px;background:var(--track);border-radius:5px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:5px;transition:width .45s;}
+
+  .log{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;align-self:start;}
+  .form{display:flex;flex-direction:column;gap:11px;}
+  .field{display:flex;flex-direction:column;gap:5px;}
+  .field label{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.13em;color:var(--muted);}
+  .field input,.field select{font-family:'Space Grotesk',sans-serif;font-size:14px;background:var(--bg);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:9px 11px;outline:none;width:100%;}
+  .field input:focus,.field select:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(240,179,60,.12);}
+  .amt-wrap{position:relative;display:flex;align-items:center;}
+  .amt-dollar{position:absolute;left:11px;font-family:'JetBrains Mono',monospace;color:var(--amber);font-size:16px;pointer-events:none;}
+  .amt-wrap input{padding-left:24px;font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;}
+  .logbtn{margin-top:3px;font-weight:600;font-size:15px;color:#1A1407;background:linear-gradient(180deg,#F6CB6A,#EBA72E);border:none;border-radius:8px;padding:11px;cursor:pointer;}
+  .logbtn:hover{filter:brightness(1.06);}
+  .logbtn:disabled{opacity:.5;cursor:wait;}
+
+  .recent{margin-top:20px;border-top:1px solid var(--border);padding-top:14px;}
+  .recent-h{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.13em;color:var(--muted);margin-bottom:10px;}
+  .empty{font-size:13px;color:var(--muted);line-height:1.5;}
+  ul.list{list-style:none;margin:0;padding:0;max-height:280px;overflow-y:auto;}
+  .item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(43,40,32,.6);}
+  .item-l{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;min-width:0;}
+  .item-amt{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;color:var(--amber);}
+  .item-cat{font-size:12px;}
+  .item-note{font-size:11.5px;color:var(--muted);}
+  .item-r{display:flex;align-items:center;gap:8px;}
+  .item-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+  .item-x{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;}
+  .item-x:hover{color:var(--verm);}
+
+  .foot{margin-top:34px;padding-top:18px;border-top:1px solid var(--border);font-size:12.5px;color:var(--muted);line-height:1.5;}
+
+  /* setup overlay */
+  .overlay{position:fixed;inset:0;background:rgba(8,7,5,.92);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;}
+  .setup{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:30px;max-width:520px;width:100%;}
+  .setup h2{margin:0 0 6px;font-size:22px;}
+  .setup p{color:var(--muted);font-size:13.5px;line-height:1.6;margin:0 0 18px;}
+  .setup code{font-family:'JetBrains Mono',monospace;background:var(--bg);padding:2px 6px;border-radius:4px;font-size:12px;color:var(--amber);}
+  .setup .field{margin-bottom:13px;}
+  .setup .logbtn{width:100%;margin-top:6px;}
+  .err{color:var(--verm);font-size:12.5px;margin-top:8px;min-height:16px;}
+
+  @media (max-width:760px){
+    .grid{grid-template-columns:1fr;}
+    .gauges{grid-template-columns:repeat(2,1fr);}
+    h1{font-size:38px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .runway-used,.runway-marker,.bar-fill{transition:none;}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// RUNWAY · SF — conecta a Supabase vía REST (PostgREST)
+// Solo usa la anon key (segura para el navegador) + RLS.
+// El password de Postgres NUNCA va aquí.
+// ─────────────────────────────────────────────────────────────
+
+const TOTAL = 7700;
+const PLAN_DAYS = 90;
+const CFG_KEY = "runway_cfg_v1";
+
+// Precargado para Santi — entra directo, sin setup.
+// La anon key es pública por diseño (protegida por RLS); ok en tu archivo personal.
+const DEFAULT_CFG = {
+  url: "https://amcxdorsjykuhxvkodmi.supabase.co",
+  key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtY3hkb3JzanlrdWh4dmtvZG1pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MjgxNDMsImV4cCI6MjA5NzQwNDE0M30.U2t3MS1nQdcIOaU8iKaE8yE9veRfss0FBSo-gjWT3OM",
+  startDate: "2026-06-18"
+};
+
+const $ = (s, r=document) => r.querySelector(s);
+const usd = n => "$" + Math.round(n).toLocaleString("en-US");
+const todayISO = () => new Date().toISOString().slice(0,10);
+const dbetween = (a,b) => Math.floor((new Date(b+"T00:00:00")-new Date(a+"T00:00:00"))/86400000);
+
+let cfg = loadCfg();
+let budgets = [];
+let expenses = [];
+let view = "3m";       // 'week' | 'month' | '3m'
+let periodIdx = 0;     // index within view
+let posting = false;
+
+function loadCfg(){
+  try {
+    const stored = JSON.parse(localStorage.getItem(CFG_KEY));
+    if (stored && stored.url && stored.key) return stored;
+  } catch(e){}
+  return DEFAULT_CFG;   // entra directo con lo precargado
+}
+function saveCfg(c){ try{ localStorage.setItem(CFG_KEY, JSON.stringify(c)); }catch(e){} cfg=c; }
+
+// ── REST helpers ──
+function rest(path, opts={}){
+  return fetch(`${cfg.url}/rest/v1/${path}`, {
+    ...opts,
+    headers: {
+      apikey: cfg.key,
+      Authorization: "Bearer " + cfg.key,
+      "Content-Type": "application/json",
+      ...(opts.headers||{})
+    }
+  });
+}
+async function fetchAll(){
+  const [b, e] = await Promise.all([
+    rest("budgets?select=*"),
+    rest("expenses?select=*&order=spent_on.desc,created_at.desc")
+  ]);
+  if(!b.ok || !e.ok) throw new Error("fetch failed");
+  budgets = await b.json();
+  expenses = await e.json();
+  // mantener orden estable por monto para la vista de categorías
+  budgets.sort((x,y)=>y.budget-x.budget);
+}
+
+// ── period helpers ──
+function dayIdx(iso){ return dbetween(cfg.startDate, iso); }
+function periodRange(){
+  if(view==="3m") return [0, PLAN_DAYS];
+  if(view==="month") return [periodIdx*30, periodIdx*30+30];
+  return [periodIdx*7, periodIdx*7+7]; // week
+}
+function maxPeriodIdx(){
+  if(view==="3m") return 0;
+  if(view==="month") return 2;
+  return 12;
+}
+function periodLabel(){
+  if(view==="3m") return "los 3 meses";
+  const [a] = periodRange();
+  const d0 = new Date(cfg.startDate+"T00:00:00"); d0.setDate(d0.getDate()+a);
+  const fmt = dt => dt.toLocaleDateString("es-MX",{day:"numeric",month:"short"});
+  if(view==="month") return `Mes ${periodIdx+1} · desde ${fmt(d0)}`;
+  const d1 = new Date(d0); d1.setDate(d1.getDate()+6);
+  return `Semana ${periodIdx+1} · ${fmt(d0)}–${fmt(d1)}`;
+}
+function periodDivisor(){ // para dividir presupuesto 3-meses al periodo
+  if(view==="3m") return 1;
+  if(view==="month") return 3;
+  return PLAN_DAYS/7; // ~12.86 semanas
+}
+
+// ── render ──
+function render(){
+  const app = $("#app");
+  if(!cfg){ app.innerHTML = ""; app.appendChild(setupView()); return; }
+  app.innerHTML = mainView();
+  wire();
+}
+
+function setupView(err){
+  const d = document.createElement("div");
+  d.className = "overlay";
+  d.innerHTML = `
+    <div class="setup">
+      <h2>Conecta tu Supabase</h2>
+      <p>Antes que nada: corre el archivo <code>01-setup.sql</code> en
+      Supabase → SQL Editor (crea las tablas y la seguridad).
+      Luego pega aquí tu <b>Project URL</b> y tu <b>anon public key</b>
+      (Settings → API). Estas dos son seguras para el navegador — no es el password de la base.</p>
+      <div class="field">
+        <label>PROJECT URL</label>
+        <input id="su" placeholder="https://amcxdorsjykuhxvkodmi.supabase.co" />
+      </div>
+      <div class="field">
+        <label>ANON PUBLIC KEY</label>
+        <input id="sk" placeholder="eyJhbGciOi..." />
+      </div>
+      <div class="field">
+        <label>FECHA DE INICIO DEL RUNWAY</label>
+        <input id="sd" type="date" value="${todayISO()}" />
+      </div>
+      <button class="logbtn" id="connect">Conectar</button>
+      <div class="err">${err||""}</div>
+    </div>`;
+  setTimeout(()=>{
+    $("#connect", d).onclick = async () => {
+      const url = $("#su",d).value.trim().replace(/\/$/,"");
+      const key = $("#sk",d).value.trim();
+      const sd  = $("#sd",d).value || todayISO();
+      if(!url || !key){ $(".err",d).textContent = "Faltan URL o key."; return; }
+      saveCfg({url,key,startDate:sd});
+      try{
+        await fetchAll();
+        render();
+      }catch(e){
+        cfg = null; localStorage.removeItem(CFG_KEY);
+        render();
+        setTimeout(()=>{ const o=setupView("No pude conectar. Revisa la URL, la key, y que corriste el SQL."); $("#app").appendChild(o);},0);
+      }
+    };
+  },0);
+  return d;
+}
+
+function computed(){
+  const totalSpent = expenses.reduce((s,e)=>s+Number(e.amount),0);
+  const allocated  = budgets.reduce((s,b)=>s+Number(b.budget),0);
+  const reserve    = TOTAL - allocated;
+  const remaining  = TOTAL - totalSpent;
+  const pct        = Math.min(1, totalSpent/TOTAL);
+  const elapsed    = Math.max(0, dbetween(cfg.startDate, todayISO()));
+  const burn       = totalSpent / Math.max(1, elapsed);
+  const runwayDays = burn>0 ? remaining/burn : Infinity;
+  const safe       = runwayDays >= (PLAN_DAYS - elapsed) || totalSpent===0;
+  return {totalSpent,allocated,reserve,remaining,pct,elapsed,burn,runwayDays,safe};
+}
+
+function mainView(){
+  const c = computed();
+  const [a,b] = periodRange();
+  const inPeriod = e => { const di=dayIdx(e.spent_on); return di>=a && di<b; };
+  const periodExp = expenses.filter(inPeriod);
+  const periodSpent = periodExp.reduce((s,e)=>s+Number(e.amount),0);
+  const div = periodDivisor();
+  const periodBudget = c.allocated/div;
+  const spentByCat = {};
+  budgets.forEach(bd=>spentByCat[bd.id]=0);
+  periodExp.forEach(e=>{ spentByCat[e.category]=(spentByCat[e.category]||0)+Number(e.amount); });
+
+  return `
+  <div class="wrap">
+    <header class="head">
+      <div>
+        <div class="eyebrow">SAN FRANCISCO · 3 MESES · $7,700</div>
+        <h1>RUNWAY</h1>
+      </div>
+      <div class="statusbox">
+        <div class="statuslabel">RESERVA / COLCHÓN SIN ASIGNAR</div>
+        <div class="statusval">${usd(c.reserve)}</div>
+      </div>
+    </header>
+
+    <div class="conn">
+      <span class="dot ok"></span> conectado a Supabase
+      <button class="gear" id="gear">ajustes</button>
+    </div>
+
+    <section class="gauges">
+      <div class="gauge"><div class="l">GASTADO</div><div class="v">${usd(c.totalSpent)}</div><div class="s">de ${usd(TOTAL)}</div></div>
+      <div class="gauge"><div class="l">RESTANTE</div><div class="v" style="color:${c.remaining<c.reserve?'#E2603B':'#86C7A0'}">${usd(c.remaining)}</div><div class="s">total disponible</div></div>
+      <div class="gauge"><div class="l">QUEMA DIARIA</div><div class="v">${c.totalSpent===0?'—':usd(c.burn)+'/d'}</div><div class="s">${c.elapsed} días corridos</div></div>
+      <div class="gauge"><div class="l">RUNWAY</div><div class="v" style="color:${c.safe?'#86C7A0':'#E2603B'}">${c.runwayDays===Infinity?'∞':Math.round(c.runwayDays)+' d'}</div><div class="s">plan: ${PLAN_DAYS} días</div></div>
+      <div class="gauge"><div class="l">ASIGNADO</div><div class="v">${usd(c.allocated)}</div><div class="s">${usd(c.reserve)} guardado</div></div>
+    </section>
+
+    <div class="runway">
+      <div class="runway-used" style="width:${c.pct*100}%"></div>
+      <div class="runway-line"></div>
+      <div class="runway-marker" style="left:calc(${c.pct*100}% - 1px)"></div>
+    </div>
+    <div class="runway-foot"><span>${Math.round(c.pct*100)}% consumido</span><span>${usd(c.remaining)} de pista por delante</span></div>
+
+    ${!c.safe ? `<div class="warn">⚠ A tu ritmo actual te quedas sin runway en ~${Math.round(c.runwayDays)} días, antes de cerrar el plan de 90. Baja gasto variable o frena los pagos únicos.</div>`:""}
+
+    <div class="periodbar">
+      <div class="seg">
+        <button data-v="week" class="${view==='week'?'active':''}">SEMANA</button>
+        <button data-v="month" class="${view==='month'?'active':''}">MES</button>
+        <button data-v="3m" class="${view==='3m'?'active':''}">3 MESES</button>
+      </div>
+      ${view!=='3m' ? `<div class="nav">
+        <button id="prev" ${periodIdx<=0?'disabled':''}>‹</button>
+        <span class="plabel">${periodLabel()}</span>
+        <button id="next" ${periodIdx>=maxPeriodIdx()?'disabled':''}>›</button>
+      </div>`:`<span class="plabel mono" style="color:var(--muted)">vista completa</span>`}
+    </div>
+
+    <div class="psum">
+      <div class="blk"><span class="bl">GASTADO ${view==='3m'?'(TOTAL)':'(ESTE PERIODO)'}</span><span class="bv" style="color:var(--amber)">${usd(periodSpent)}</span></div>
+      <div class="blk"><span class="bl">OBJETIVO DEL PERIODO</span><span class="bv">${usd(periodBudget)}</span></div>
+      <div class="blk"><span class="bl">DIFERENCIA</span><span class="bv" style="color:${periodSpent>periodBudget?'#E2603B':'#86C7A0'}">${periodSpent>periodBudget?'+':''}${usd(periodSpent-periodBudget)}</span></div>
+    </div>
+    ${view!=='3m'?`<div class="hint" style="margin-top:8px">El objetivo divide el presupuesto de 3 meses en partes iguales. Renta, subs y el coach se pagan en bloque, así que una semana/mes puede verse alto o bajo — mira la tendencia, no un solo periodo.</div>`:""}
+
+    <div class="grid">
+      <section>
+        <div class="section-h"><h2>A DÓNDE VA</h2><span class="hint">toca un presupuesto para ajustar</span></div>
+        ${budgets.map(bd=>{
+          const sp = spentByCat[bd.id]||0;
+          const pb = Number(bd.budget)/div;
+          const p = pb>0?Math.min(1,sp/pb):0;
+          const over = sp>pb;
+          return `<div class="cat">
+            <div class="cat-top">
+              <div class="cat-name">${bd.label}<span class="kind">${bd.kind}</span></div>
+              <div class="cat-fig">
+                <span style="color:${over?'#E2603B':'#EDE7D6'}">${usd(sp)}</span>
+                <span class="slash">/</span>
+                <button class="budget-btn" data-bid="${bd.id}">${usd(pb)}</button>
+              </div>
+            </div>
+            <div class="bar"><div class="bar-fill" style="width:${p*100}%;background:${over?'#E2603B':p>.85?'#F0B33C':'#86C7A0'}"></div></div>
+          </div>`;
+        }).join("")}
+      </section>
+
+      <section class="log">
+        <div class="section-h"><h2>REGISTRAR GASTO</h2></div>
+        <div class="form">
+          <div class="field"><label>MONTO</label><div class="amt-wrap"><span class="amt-dollar">$</span><input id="amt" type="number" inputmode="decimal" placeholder="0" /></div></div>
+          <div class="field"><label>CATEGORÍA</label><select id="cat">${budgets.map(bd=>`<option value="${bd.id}">${bd.label}</option>`).join("")}</select></div>
+          <div class="field"><label>NOTA</label><input id="note" type="text" placeholder="¿qué fue?" /></div>
+          <div class="field"><label>FECHA</label><input id="date" type="date" value="${todayISO()}" /></div>
+          <button class="logbtn" id="add" ${posting?'disabled':''}>${posting?'Guardando…':'Registrar'}</button>
+        </div>
+        <div class="recent">
+          <div class="recent-h"><span>RECIENTES</span></div>
+          ${expenses.length===0?`<div class="empty">Nada registrado aún. Cada café, cada tap de BART — métele todo. El runway solo es honesto si tú lo eres.</div>`:
+          `<ul class="list">${expenses.slice(0,40).map(e=>{
+            const bd = budgets.find(x=>x.id===e.category);
+            return `<li class="item">
+              <div class="item-l"><span class="item-amt">${usd(e.amount)}</span><span class="item-cat">${bd?bd.label:e.category}</span>${e.note?`<span class="item-note">${e.note}</span>`:""}</div>
+              <div class="item-r"><span class="item-date">${String(e.spent_on).slice(5)}</span><button class="item-x" data-del="${e.id}">×</button></div>
+            </li>`;
+          }).join("")}</ul>`}
+        </div>
+      </section>
+    </div>
+
+    <div class="foot">$7,700 · 90 días · al final de la pista: el rol de $150k + Berkeley. Protege la reserva.</div>
+  </div>`;
+}
+
+function wire(){
+  $("#gear") && ($("#gear").onclick = () => { document.body.appendChild(setupView()); });
+
+  document.querySelectorAll(".seg button").forEach(btn=>{
+    btn.onclick = () => { view = btn.dataset.v; periodIdx = (view==='3m')?0:0; render(); };
+  });
+  $("#prev") && ($("#prev").onclick = ()=>{ if(periodIdx>0){periodIdx--;render();} });
+  $("#next") && ($("#next").onclick = ()=>{ if(periodIdx<maxPeriodIdx()){periodIdx++;render();} });
+
+  // editar presupuesto
+  document.querySelectorAll(".budget-btn").forEach(b=>{
+    b.onclick = () => {
+      const id = b.dataset.bid;
+      const bd = budgets.find(x=>x.id===id);
+      const inp = document.createElement("input");
+      inp.className="budget-input"; inp.value = Number(bd.budget);
+      b.replaceWith(inp); inp.focus();
+      const save = async () => {
+        const v = Math.max(0, parseFloat(inp.value)||0);
+        try{
+          await rest(`budgets?id=eq.${id}`, {method:"PATCH", headers:{Prefer:"return=minimal"}, body:JSON.stringify({budget:v})});
+          bd.budget = v; budgets.sort((x,y)=>y.budget-x.budget);
+        }catch(e){}
+        render();
+      };
+      inp.onblur = save;
+      inp.onkeydown = ev => { if(ev.key==="Enter") save(); if(ev.key==="Escape") render(); };
+    };
+  });
+
+  // agregar gasto
+  $("#add") && ($("#add").onclick = async () => {
+    const amount = parseFloat($("#amt").value);
+    if(!amount || amount<=0) return;
+    posting = true; render();
+    try{
+      await rest("expenses", {method:"POST", headers:{Prefer:"return=representation"}, body:JSON.stringify({
+        amount, category:$("#cat").value, note:$("#note").value.trim(), spent_on:$("#date").value
+      })});
+      await fetchAll();
+    }catch(e){}
+    posting = false; render();
+  });
+
+  // borrar gasto
+  document.querySelectorAll("[data-del]").forEach(x=>{
+    x.onclick = async () => {
+      try{ await rest(`expenses?id=eq.${x.dataset.del}`, {method:"DELETE"}); await fetchAll(); }catch(e){}
+      render();
+    };
+  });
+}
+
+// ── boot ──
+(async function(){
+  if(cfg){
+    try{ await fetchAll(); }catch(e){ /* mostrará setup si falla */ }
+  }
+  render();
+})();
+</script>
+</body>
+</html>
